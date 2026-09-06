@@ -86,8 +86,10 @@ class SQLConnectionManager(TransactionBase):
                     if fkcs:
                         if not self._engine.dialect.supports_alter:
                             continue
-                        for fkc in fkcs:
-                            fk_constraint = ForeignKeyConstraint((), (), name=fkc)
+                        # fkcs are (referring_table, constraint_name) tuples; the
+                        # name string is needed, not the tuple.
+                        for _referring_table, fkc_name in fkcs:
+                            fk_constraint = ForeignKeyConstraint((), (), name=fkc_name)
                             Table(tname, MetaData(), fk_constraint)
                             conn.execute(DropConstraint(fk_constraint))
 
