@@ -87,10 +87,13 @@ class SQLConnectionManager(TransactionBase):
                         if not self._engine.dialect.supports_alter:
                             continue
                         # fkcs are (referring_table, constraint_name) tuples; the
-                        # name string is needed, not the tuple.
-                        for _referring_table, fkc_name in fkcs:
+                        # constraint must be attached to the table that owns it.
+                        # For per-table entries referring_table == tname, but the
+                        # final (None, remaining_fkcs) entry (FK cycles) has
+                        # tname=None, so the tuple's table is the reliable one.
+                        for referring_table, fkc_name in fkcs:
                             fk_constraint = ForeignKeyConstraint((), (), name=fkc_name)
-                            Table(tname, MetaData(), fk_constraint)
+                            Table(referring_table, MetaData(), fk_constraint)
                             conn.execute(DropConstraint(fk_constraint))
 
         self._session_cls = sessionmaker(bind=self._engine)
